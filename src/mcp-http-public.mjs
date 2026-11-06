@@ -2,6 +2,8 @@ import http from "node:http";
 import { createRequire } from "node:module";
 import { createCodexlessRuntime } from "./codexless-runtime.mjs";
 import { createMcpHttpSessionRouter } from "./mcp-http-session-router.mjs";
+import { MCP_INPUT_LIMITS } from "./mcp-input-limits.mjs";
+import { installLocalHttpDiagnostics } from "./recent-call-diagnostics.mjs";
 import { codexlessIdentity } from "./linux-identity.mjs";
 
 const require = createRequire(import.meta.url);
@@ -19,12 +21,14 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 
 const runtime = await createCodexlessRuntime({ mode: "public" });
 const mcpHandler = createMcpHandler(runtime.createServer, {
+  maxRequestBodySize: MCP_INPUT_LIMITS.maxRequestBodySize,
   legacy: "stateless",
   maxSubscriptions: 0,
   keepAliveMs: 0,
   onerror: (error) => console.error("[codexless-public-mcp]", error),
 });
 const nodeMcpHandler = toNodeHandler(mcpHandler, {
+  maxRequestBodySize: MCP_INPUT_LIMITS.maxRequestBodySize,
   onerror: (error) => console.error("[codexless-public-node]", error),
 });
 const sessionRouter = createMcpHttpSessionRouter({
@@ -36,6 +40,7 @@ const validateHost = localhostHostValidation();
 const validateOrigin = localhostOriginValidation();
 
 const server = http.createServer(async (req, res) => {
+  installLocalHttpDiagnostics(req, res, { enabled: process.env.CODEXLESS_LOCAL_DIAGNOSTICS === "1" });
   try {
     if (!validateHost(req, res)) return;
     if (!validateOrigin(req, res)) return;
@@ -73,7 +78,7 @@ const server = http.createServer(async (req, res) => {
 
 server.keepAliveTimeout = 5_000;
 server.headersTimeout = 10_000;
-server.requestTimeout = 0;
+server.requestTimeout = 30_000;
 server.maxHeadersCount = 64;
 
 await new Promise((resolve, reject) => {
