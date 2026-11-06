@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { localCommandTimeoutFromEnv } from '../src/local-command-settings.mjs';
+import { localCommandTimeoutFromEnv, localMcpGuidanceFromEnv } from '../src/local-command-settings.mjs';
 import { createCodexToolboxServerFactory } from '../src/mcp-server-factory.mjs';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
@@ -11,6 +11,14 @@ test('long command timeouts are opt-in and bounded locally', () => {
   assert.equal(localCommandTimeoutFromEnv({CODEXLESS_COMMAND_MAX_TIMEOUT_MS:'600000'}), 600000);
   for (const value of ['0','29999','600001','Infinity','30_000',' 600000','1e5']) {
     assert.throws(() => localCommandTimeoutFromEnv({CODEXLESS_COMMAND_MAX_TIMEOUT_MS:value}));
+  }
+});
+
+test('local MCP guidance is opt-in and rejects multiline or oversized content', () => {
+  assert.equal(localMcpGuidanceFromEnv({}), '');
+  assert.equal(localMcpGuidanceFromEnv({CODEXLESS_LOCAL_MCP_GUIDANCE:'  Use the local project cwd.  '}), 'Use the local project cwd.');
+  for (const value of ['line one\nline two', 'x'.repeat(2049), 'bad\u0000value']) {
+    assert.throws(() => localMcpGuidanceFromEnv({CODEXLESS_LOCAL_MCP_GUIDANCE:value}));
   }
 });
 

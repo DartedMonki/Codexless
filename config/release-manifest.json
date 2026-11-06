@@ -4,7 +4,7 @@
   "version": "0.1.2-preview.1",
   "buildIdAlgorithm": "sha256-release-identity-v1",
   "fileHashAlgorithm": "sha256-raw-file-v1",
-  "sourceRevision": "ed0dbc3c1ac259abf1ad1d21325aa88b8094a5ba+local-security-cli-jobs",
+  "sourceRevision": "30fd593fd1b2b6d433a89c22be3a859a6cf6255b+local-mcp-guidance",
   "hostContractVersion": "codexless-public-preview-v1",
   "stateCompatibility": {
     "migration": "none",
@@ -17,7 +17,7 @@
       }
     }
   },
-  "buildId": "565026444a70d978fb6f240651a257a8fb0e92408c29f2d16a01bfd50097154d",
+  "buildId": "c79c93bbbc1c5257af4b7f0d14891d9e739fce89fa2c0e95f377309e3cd01986",
   "files": [
     { "path": "EXPORT_SYNC.md", "sha256": "d4618e85994911b887f02237b3e0a25c50e11cc101cce535d8059888c175aa16" },
     { "path": "LICENSE", "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4" },
@@ -105,7 +105,7 @@
     { "path": "src/codex-runtime-provider.mjs", "sha256": "9257b11cc1f1d465501f525f75cb57dc1640d4370906e9906ec8d063c5fd5f45" },
     { "path": "src/codex-skill-sync.mjs", "sha256": "7b0859baaca0271fec30d6c3adb69d0b40f727dfadd70abda31b032e2e2b394a" },
     { "path": "src/codex-workbench-executor.mjs", "sha256": "1ee037bc407024361e95704c35a8d422cb57e9d3db146893661ddff385e9bd30" },
-    { "path": "src/codexless-runtime.mjs", "sha256": "b3f1e382168bfe42edebd067577ac533a9ac2868ed8b199724e02de275b401fe" },
+    { "path": "src/codexless-runtime.mjs", "sha256": "6024f5dd5f5cb371ab28ce587da93e2b2bc7f353c486ab46b9e3f1d2c9155940" },
     { "path": "src/construction-tools.mjs", "sha256": "40b78c253ff543ae9bc2f7ac0319fd363a57efcf637da6bf498bdee85d0f7cfe" },
     { "path": "src/deferred-browser-adapter.mjs", "sha256": "4d5b70d9fa2fbb4e2c8132455c3acda17969ac800476d88a78e16588f8b59a11" },
     { "path": "src/doctor-health.mjs", "sha256": "08b0ae3dde0bd48eba4b846db174bd7fc44b15b23395db87e6fc5d658e4d4a26" },
@@ -117,7 +117,7 @@
     { "path": "src/linux-construction-adapter.mjs", "sha256": "5870aedba80d0f01a28bb956e9e765bfd9a68cfc18e5e4dc96a5f202c6b9a6de" },
     { "path": "src/linux-identity.mjs", "sha256": "c68e9a45d6550e8adb52b1691e5d9429dd3eb634d6d128af34cd18aa349b622f" },
     { "path": "src/local-command-jobs.mjs", "sha256": "ea06531571fc7c86ea0eda74a012660c696e6122b52e199ec00938f19b1366a1" },
-    { "path": "src/local-command-settings.mjs", "sha256": "048b5d2b28f79fb427cc22d81714ad04833a95d7085adc4910ccf56225a72c18" },
+    { "path": "src/local-command-settings.mjs", "sha256": "06b16b21eb43a76b957d4eaa62d8f6c541422206c7c898ba78a4b10593d3f4d9" },
     { "path": "src/managed-runtime-readiness.mjs", "sha256": "ffa03af90c9939ba21daa59c33bc81c02778bd92696dfbaf5bed6216d10f4875" },
     { "path": "src/mcp-http-public.mjs", "sha256": "3590b1c88ce2e85c7160e2ae686aa849cccb5e299602baec72f28743b050338e" },
     { "path": "src/mcp-http-session-router.mjs", "sha256": "4d9786b1fc03127647491b2f00f93c52a7331e00fe345db0f16fa7272b8594f2" },
