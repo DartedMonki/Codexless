@@ -20,3 +20,12 @@ export function localCommandConcurrencyFromEnv(env = process.env) {
   if (!/^[1-4]$/.test(raw)) throw new Error("CODEXLESS_COMMAND_MAX_CONCURRENT must be an integer between 1 and 4");
   return Number(raw);
 }
+
+export function localMcpGuidanceFromEnv(env = process.env) {
+  const value = env.CODEXLESS_LOCAL_MCP_GUIDANCE;
+  if (value === undefined || value === "") return "";
+  if (typeof value !== "string" || value.length > 2048 || /[\u0000-\u001f\u007f]/.test(value)) {
+    throw new Error("CODEXLESS_LOCAL_MCP_GUIDANCE must be a single line of at most 2048 characters");
+  }
+  return value.trim();
+}
