@@ -39,6 +39,53 @@ export function recentCallOptionsFromEnv(env = process.env, { readOnly = false }
   };
 }
 
+// Local operator opt-in only. This does not register a diagnostic MCP tool or
+// HTTP endpoint and never records tool arguments, results, or exception text.
+export function localCallDiagnosticsFromEnv(env = process.env) {
+  const enabled = env.CODEXLESS_LOCAL_DIAGNOSTICS;
+  if (enabled === undefined || enabled === "" || enabled === "0") return null;
+  if (enabled !== "1") throw new Error("CODEXLESS_LOCAL_DIAGNOSTICS must be 0 or 1");
+  return createRecentCallDiagnostics({
+    ...recentCallOptionsFromEnv(env),
+    onReceipt: (receipt) => console.error(JSON.stringify({ event: "tool_call", ...receipt })),
+  });
+}
+
+export function installLocalHttpDiagnostics(req, res, {
+  enabled = false,
+  now = () => Date.now(),
+  emit = (event) => console.error(JSON.stringify(event)),
+} = {}) {
+  if (!enabled) return;
+  const started = now();
+  const requestId = randomUUID();
+  const pathname = String(req.url ?? "").split("?", 1)[0];
+  const route = ["/mcp", "/healthz", "/readyz"].includes(pathname) ? pathname : "other";
+  const method = ["GET", "POST", "DELETE", "OPTIONS", "HEAD"].includes(req.method) ? req.method : "OTHER";
+  let recorded = false;
+  res.setHeader("x-codexless-request-id", requestId);
+  const record = (aborted) => {
+    if (recorded) return;
+    recorded = true;
+    if (!aborted && route !== "/mcp" && res.statusCode < 400) return;
+    try {
+      emit({
+        time: new Date(now()).toISOString(),
+        event: aborted ? "http_aborted" : "http_request",
+        request_id: requestId,
+        method,
+        route,
+        status: res.statusCode,
+        duration_ms: Math.max(0, now() - started),
+      });
+    } catch {
+      // Diagnostic output must not change an already completed operation.
+    }
+  };
+  res.once("finish", () => record(false));
+  res.once("close", () => record(true));
+}
+
 export function createRecentCallDiagnostics({
   filePath = defaultRecentCallStateFile(),
   ttlMs = DEFAULT_RECENT_CALL_TTL_MS,
@@ -47,6 +94,7 @@ export function createRecentCallDiagnostics({
   readOnly = false,
   now = () => Date.now(),
   idFactory = () => `receipt_${randomUUID()}`,
+  onReceipt = null,
 } = {}) {
   validateBounds({ ttlMs, maxEntries, queryLimit });
   const resolvedPath = filePath ? path.resolve(filePath) : null;
@@ -132,6 +180,9 @@ export function createRecentCallDiagnostics({
     records.set(receipt.receipt_id, validateStoredReceipt(receipt));
     trim();
     flush();
+    if (onReceipt) {
+      try { onReceipt(cloneReceipt(receipt)); } catch { /* Keep diagnostics observational. */ }
+    }
   }
 
   function arrive(toolName) {

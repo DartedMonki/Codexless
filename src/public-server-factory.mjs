@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { MCP_INPUT_LIMITS } from "./mcp-input-limits.mjs";
 import { codexlessIdentity } from "./linux-identity.mjs";
 import { registerAgentPreviewTools } from "./agent-tools.mjs";
 import { registerBrowserPreviewTools } from "./browser-tools.mjs";
@@ -109,6 +110,7 @@ export function createPublicServerFactory({
       },
       {
         instructions: PUBLIC_SERVER_INSTRUCTIONS,
+        maxToolInputElements: MCP_INPUT_LIMITS.maxToolInputElements,
       }
     );
     installRecentCallToolInstrumentation(server, recentCallDiagnostics);

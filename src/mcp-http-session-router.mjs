@@ -1,20 +1,20 @@
 import { randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
+import { MCP_INPUT_LIMITS, validateMcpRequestBody } from "./mcp-input-limits.mjs";
 
 const require = createRequire(import.meta.url);
 const { isLegacyRequest } = require("@modelcontextprotocol/server");
 const { NodeStreamableHTTPServerTransport, toWebRequest } = require("@modelcontextprotocol/node");
 
-const MAX_MCP_JSON_BYTES = 2 * 1024 * 1024;
-
 async function readJsonBody(req) {
   if ((req.method ?? "GET").toUpperCase() !== "POST") return undefined;
   const chunks = [];
   let total = 0;
-  for await (const chunk of req) {
+  // Preserve the socket on rejection so the caller receives a 413 response.
+  for await (const chunk of req.iterator({ destroyOnReturn: false })) {
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
     total += buffer.length;
-    if (total > MAX_MCP_JSON_BYTES) {
+    if (total > MCP_INPUT_LIMITS.maxRequestBodySize) {
       const error = new Error("MCP request body exceeds the 2 MiB transport limit");
       error.code = "MCP_HTTP_BODY_TOO_LARGE";
       throw error;
@@ -27,7 +27,11 @@ async function readJsonBody(req) {
 
 function jsonError(res, statusCode, message) {
   if (res.headersSent) return;
-  res.writeHead(statusCode, { "content-type": "application/json", "cache-control": "no-store" });
+  res.writeHead(statusCode, {
+    "content-type": "application/json",
+    "cache-control": "no-store",
+    ...(statusCode === 413 ? { connection: "close" } : {}),
+  });
   res.end(JSON.stringify({
     jsonrpc: "2.0",
     error: { code: -32000, message },
@@ -62,6 +66,7 @@ export function createMcpHttpSessionRouter({ createServer, modernNodeHandler, on
     const entry = { server: null, transport: null };
     pendingLegacyEntries.add(entry);
     const transport = new NodeStreamableHTTPServerTransport({
+      maxRequestBodySize: MCP_INPUT_LIMITS.maxRequestBodySize,
       sessionIdGenerator: randomUUID,
       keepAliveMs: 0,
       onsessioninitialized: (sessionId) => {
@@ -126,13 +131,23 @@ export function createMcpHttpSessionRouter({ createServer, modernNodeHandler, on
       parsedBody = await readJsonBody(req);
     } catch (error) {
       if (error?.code === "MCP_HTTP_BODY_TOO_LARGE") {
+        req.resume();
         jsonError(res, 413, "MCP request body exceeds the 2 MiB transport limit");
+        return;
+      }
+      if (error instanceof SyntaxError) {
+        jsonError(res, 400, "Invalid MCP JSON request body");
         return;
       }
       throw error;
     }
-    const webRequest = await toWebRequest(req, parsedBody);
-    if (await isLegacyRequest(webRequest, parsedBody)) {
+    const inputError = validateMcpRequestBody(parsedBody);
+    if (inputError) {
+      jsonError(res, 400, inputError);
+      return;
+    }
+    const webRequest = await toWebRequest(req, parsedBody, { maxRequestBodySize: MCP_INPUT_LIMITS.maxRequestBodySize });
+    if (await isLegacyRequest(webRequest, parsedBody, { maxRequestBodySize: MCP_INPUT_LIMITS.maxRequestBodySize })) {
       await handleLegacy(req, res, parsedBody);
       return;
     }

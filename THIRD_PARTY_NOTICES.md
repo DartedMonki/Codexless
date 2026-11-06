@@ -6,20 +6,20 @@ Codexless depends on third-party open-source packages. This file is a release-or
 
 | Package | Version | License / shipped notice | Upstream |
 |---|---:|---|---|
-| `@modelcontextprotocol/node` | `2.0.0` | package metadata: MIT; shipped LICENSE contains MCP MIT→Apache-2.0 transition text, full Apache-2.0 and MIT terms, plus CC-BY-4.0 documentation notice | Model Context Protocol TypeScript SDK |
-| `@modelcontextprotocol/server` | `2.0.0` | same MCP transition LICENSE described above | Model Context Protocol TypeScript SDK |
-| `@modelcontextprotocol/core` | `2.0.0` | same MCP transition LICENSE described above | Model Context Protocol TypeScript SDK |
-| `@hono/node-server` | `1.19.17` | MIT | Hono Node.js adapter |
-| `hono` | `4.13.2` | MIT | Hono |
-| `zod` | `4.4.3` | MIT | Zod |
+| `@modelcontextprotocol/node` | `2.1.2` | package metadata: Apache-2.0; shipped LICENSE contains MCP MIT→Apache-2.0 transition text, full Apache-2.0 and MIT terms, plus CC-BY-4.0 documentation notice | Model Context Protocol TypeScript SDK |
+| `@modelcontextprotocol/server` | `2.4.0` | same MCP transition LICENSE described above | Model Context Protocol TypeScript SDK |
+| `@modelcontextprotocol/core` | `2.4.0` | same MCP transition LICENSE described above | Model Context Protocol TypeScript SDK |
+| `@hono/node-server` | `2.1.6` | MIT | Hono Node.js adapter |
+| `hono` | `4.13.16` | MIT | Hono |
+| `zod` | `4.6.7` | MIT | Zod |
 
 ## Development-only dependency
 
 | Package | Version | License / shipped notice | Upstream |
 |---|---:|---|---|
-| `@modelcontextprotocol/client` | `2.0.0` | package metadata: MIT; shipped LICENSE contains the same MCP transition text and license terms | Model Context Protocol TypeScript SDK |
+| `@modelcontextprotocol/client` | `2.4.0` | package metadata: Apache-2.0; shipped LICENSE contains the same MCP transition text and license terms | Model Context Protocol TypeScript SDK |
 
-The MCP 2.0.0 package manifests currently identify the package license as MIT, while their shipped LICENSE files explicitly document an ongoing MIT-to-Apache-2.0 transition and include the applicable Apache-2.0, MIT, and documentation CC-BY-4.0 notices. This file therefore does not simplify those packages to “MIT-only”; the exact dependency LICENSE files remain authoritative for the code/content they cover.
+The listed MCP package manifests identify the package license as Apache-2.0, while their shipped LICENSE files document an ongoing MIT-to-Apache-2.0 transition and include the applicable Apache-2.0, MIT, and documentation CC-BY-4.0 notices. The exact dependency LICENSE files remain authoritative for the code/content they cover.
 
 Codexless does not claim ownership of third-party names, trademarks, or code. Each dependency remains subject to its own license terms and notices.
 

@@ -97,6 +97,10 @@ The bundled HTTP entry point binds only to loopback addresses (`127.0.0.1`, `loc
 
 The HTTP server also applies localhost Host/Origin validation. `/healthz` and `/readyz` return only bounded service metadata and do not intentionally publish the configured project path.
 
+Both HTTP protocol paths reject request bodies over 2 MiB, batches over 100 messages, JSON nesting beyond 64 levels, and requests containing more than 100,000 collection elements. Server factories also cap tool arguments at 50,000 array elements/object keys before schema validation. Split larger Excel operations into smaller calls. HTTP request receipt is limited to 30 seconds. These budgets reduce resource-exhaustion risk; they do not replace authentication or concurrency controls.
+
+Local operators can opt into diagnostic metadata with `CODEXLESS_LOCAL_DIAGNOSTICS=1`. Tool receipts record names, timestamps, completion/error classes and durations in the bounded local receipt store; HTTP metadata goes to stderr with generated request IDs. Arguments, result bodies, exception messages, query strings and unknown request paths are excluded. This opt-in adds no diagnostic MCP tools or HTTP routes. Keep process logs private: upstream runtime stderr can still contain operational details.
+
 Remote ChatGPT access is expected to be provided by a separately configured MCP tunnel. The tunnel is part of the deployment boundary: protect its credentials and do not expose a raw unauthenticated local service directly to the public internet.
 
 ## Installer / upgrade / uninstall boundary

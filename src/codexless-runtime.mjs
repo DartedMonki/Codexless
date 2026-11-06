@@ -27,6 +27,8 @@ import { readCodexQuotaSnapshot } from "./codex-quota-snapshot.mjs";
 import { createPreviewTelemetryClient } from "./codex-preview-account-preflight.mjs";
 import { createCodexToolboxServerFactory } from "./mcp-server-factory.mjs";
 import { createRecentCallReceiptStore } from "./recent-call-receipts.mjs";
+import { localCallDiagnosticsFromEnv } from "./recent-call-diagnostics.mjs";
+import { localCommandTimeoutFromEnv, localCommandJobsFromEnv, localCommandConcurrencyFromEnv } from "./local-command-settings.mjs";
 import { codexlessPaths } from "./linux-identity.mjs";
 
 function envString(env, name, fallback = null) {
@@ -249,8 +251,15 @@ export async function createCodexlessRuntime({
           privateConstruction ? "agent-task-cards-private.json" : "agent-task-cards-workbench.json"
         )
   );
-  const maxConcurrent = 1;
+  const maxConcurrent = localCommandConcurrencyFromEnv(env);
+  const commandJobs = localCommandJobsFromEnv(env) ? {
+    onTransition: env.CODEXLESS_LOCAL_DIAGNOSTICS === "1"
+      ? event => process.stderr.write(JSON.stringify({ event: "command_job", ...event }) + "\n")
+      : null,
+  } : null;
+  const commandMaxTimeoutMs = localCommandTimeoutFromEnv(env);
   const recentCallStore = privateConstruction ? createRecentCallReceiptStore() : null;
+  const localCallDiagnostics = localCallDiagnosticsFromEnv(env);
 
   let workbench = null;
   let existingCatalogWorkbench = null;
@@ -269,7 +278,7 @@ export async function createCodexlessRuntime({
       profileOverride,
       configOverrides,
       launchEnv: modelFreeLaunchEnv,
-      maxTimeoutMs: 30_000,
+      maxTimeoutMs: commandMaxTimeoutMs,
       watchdogGraceMs: 5_000,
       outputBytesCap: 32_768,
       allowUntrustedReadOnlyBootstrap: modelFreeRuntime.lane === "managed",
@@ -610,11 +619,12 @@ export async function createCodexlessRuntime({
       : privateConstruction
         ? HOUSEHOLD_SURFACE_VERSION
         : WORKBENCH_SURFACE_VERSION;
-    const toolAllowlist = publicPreview
+    const baseToolAllowlist = publicPreview
       ? PUBLIC_TOOL_ALLOWLIST
       : privateConstruction
         ? HOUSEHOLD_TOOL_ALLOWLIST
         : null;
+    const toolAllowlist = commandJobs && baseToolAllowlist ? [...baseToolAllowlist, "codex.command_status"] : baseToolAllowlist;
 
     const createServer = createCodexToolboxServerFactory({
       executor,
@@ -629,6 +639,8 @@ export async function createCodexlessRuntime({
       meteredConsentMode,
       meteredQuotaProvider: resourceSnapshotProvider,
       agentPreviewState,
+      localCallDiagnostics,
+      commandJobs,
       agentPortableCard: privateConstruction || publicPreview,
       legacyAgentCardInternals: false,
       agentReasoningEffort: privateConstruction || publicPreview,
@@ -638,6 +650,7 @@ export async function createCodexlessRuntime({
         : null,
       formalAgentBlock: runtimeProvider.formalAgentAvailable ? null : MANAGED_FORMAL_AGENT_BLOCK,
       maxConcurrent,
+      maxTimeoutMs: commandMaxTimeoutMs,
       version,
       exposeCwd: true,
       cwdRequired: false,
@@ -667,7 +680,7 @@ export async function createCodexlessRuntime({
       accessArgDescription:
         "readOnly is the safe compatibility default. inherit must be explicitly selected and uses the locally authorized/resolved Codex permission profile.",
       timeoutArgDescription:
-        "Bounded command timeout in milliseconds.",
+        `Bounded command timeout in milliseconds (default 10000, local maximum ${commandMaxTimeoutMs}). For typechecks, tests and audits, explicitly set a sufficient timeoutMs instead of relying on the default.`,
     });
 
     async function close() {
